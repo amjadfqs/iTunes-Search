@@ -5,7 +5,7 @@
     "insertPragma": false,
     "bracketSameLine": true,
     "jsxSingleQuote": true,
-    "printWidth": 120,
+    "printWidth": 90,
     "proseWrap": "preserve",
     "quoteProps": "as-needed",
     "requirePragma": false,
@@ -15,17 +15,8 @@
     "trailingComma": "none",
     "useTabs": false,
     "endOfLine": "auto",
-    "plugins": [
-        "@trivago/prettier-plugin-sort-imports",
-        "prettier-plugin-tailwindcss"
-    ],
-    "importOrder": [
-        "^react$",
-        "^next(/.*)?$",
-        "next-themes",
-        "@/*",
-        "<THIRD_PARTY_MODULES>"
-    ],
+    "plugins": ["@trivago/prettier-plugin-sort-imports", "prettier-plugin-tailwindcss"],
+    "importOrder": ["^react$", "^next(/.*)?$", "next-themes", "@/*", "<THIRD_PARTY_MODULES>"],
     "importOrderSeparation": true,
     "importOrderSortSpecifiers": true
 }
