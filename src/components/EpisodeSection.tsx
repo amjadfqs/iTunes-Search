@@ -134,12 +134,12 @@ export const EpisodeSection = ({ episodes }: EpisodeSectionProps) => {
                                 <div className='flex min-w-0 flex-1 flex-col justify-between'>
                                     <div className='space-y-1'>
                                         {/* Podcast Name */}
-                                        <p className='cursor-pointer truncate text-sm font-medium text-[#E3BD71]'>
+                                        <p className='cursor-pointer truncate text-sm font-medium text-yellow-600 dark:text-yellow-400'>
                                             {episode.podcast.title}
                                         </p>
 
                                         {/* Episode Title */}
-                                        <h4 className='line-clamp-2 cursor-pointer text-sm font-medium text-white'>
+                                        <h4 className='line-clamp-2 cursor-pointer text-sm font-medium text-gray-700 dark:text-white'>
                                             {episode.title}
                                         </h4>
                                     </div>
@@ -215,12 +215,12 @@ export const EpisodeSection = ({ episodes }: EpisodeSectionProps) => {
                                     <div className='flex min-w-0 flex-1 flex-col justify-between'>
                                         <div className='space-y-1'>
                                             {/* Podcast Name */}
-                                            <p className='cursor-pointer truncate text-sm font-medium text-[#E3BD71]'>
+                                            <p className='cursor-pointer truncate text-sm font-medium text-yellow-600 dark:text-yellow-400'>
                                                 {episode.podcast.title}
                                             </p>
 
                                             {/* Episode Title */}
-                                            <h4 className='line-clamp-2 cursor-pointer text-sm font-medium text-white'>
+                                            <h4 className='line-clamp-2 cursor-pointer text-sm font-medium text-gray-700 dark:text-white'>
                                                 {episode.title}
                                             </h4>
                                         </div>

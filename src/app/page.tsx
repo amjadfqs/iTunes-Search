@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import { EpisodeSection } from '@/components/EpisodeSection';
 import { PodcastSection } from '@/components/PodcastSection';
+import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { useSearch } from '@/hooks/use-search';
 import { Badge } from '@/registry/new-york-v4/ui/badge';
 import { Button } from '@/registry/new-york-v4/ui/button';
@@ -94,6 +95,11 @@ const Page = () => {
 
     return (
         <div className='bg-background min-h-screen'>
+            {/* Theme Switcher - Top Right Corner */}
+            <div className='fixed top-4 right-4 z-50'>
+                <ThemeSwitcher />
+            </div>
+
             <div className='container mx-auto px-4 py-8'>
                 {/* Search Form */}
                 <form onSubmit={handleSearch} className='mx-auto mb-8 max-w-4xl'>
