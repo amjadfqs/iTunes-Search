@@ -8,6 +8,8 @@ export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const searchTerm = searchParams.get('q');
+        const offset = parseInt(searchParams.get('offset') || '0', 10);
+        const limit = parseInt(searchParams.get('limit') || '20', 10);
 
         if (!searchTerm) {
             return NextResponse.json(
@@ -16,7 +18,7 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // Get all results from database for this search term
+        // Get paginated results from database for this search term
         // Using case-insensitive search with PostgreSQL
         const results = await prisma.searchResult.findMany({
             where: {
@@ -55,7 +57,41 @@ export async function GET(request: NextRequest) {
                 {
                     createdAt: 'desc'
                 }
-            ]
+            ],
+            skip: offset,
+            take: limit
+        });
+
+        // Get total count for pagination info
+        const totalCount = await prisma.searchResult.count({
+            where: {
+                OR: [
+                    {
+                        searchTerm: {
+                            contains: searchTerm,
+                            mode: 'insensitive'
+                        }
+                    },
+                    {
+                        trackName: {
+                            contains: searchTerm,
+                            mode: 'insensitive'
+                        }
+                    },
+                    {
+                        artistName: {
+                            contains: searchTerm,
+                            mode: 'insensitive'
+                        }
+                    },
+                    {
+                        collectionName: {
+                            contains: searchTerm,
+                            mode: 'insensitive'
+                        }
+                    }
+                ]
+            }
         });
 
         // Define proper types
@@ -158,7 +194,13 @@ export async function GET(request: NextRequest) {
             JSON.stringify(
                 {
                     podcasts,
-                    episodes
+                    episodes,
+                    pagination: {
+                        offset,
+                        limit,
+                        total: totalCount,
+                        hasMore: offset + limit < totalCount
+                    }
                 },
                 (key, value) => (typeof value === 'bigint' ? value.toString() : value)
             )

@@ -11,7 +11,6 @@ import { Input } from '@/registry/new-york-v4/ui/input';
 import {
     ChevronLeft,
     ChevronRight,
-    Database,
     ExternalLink,
     Loader2,
     Music,

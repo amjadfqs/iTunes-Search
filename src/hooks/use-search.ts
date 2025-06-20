@@ -42,11 +42,22 @@ interface Episode {
 interface SearchResponse {
     podcasts: Podcast[];
     episodes: Episode[];
+    pagination?: {
+        offset: number;
+        limit: number;
+        total: number;
+        hasMore: boolean;
+    };
 }
 
-const fetchSearch = async (searchTerm: string, offset: number = 0): Promise<SearchResponse> => {
+const fetchSearch = async (
+    searchTerm: string,
+    offset: number = 0
+): Promise<SearchResponse> => {
     // First trigger the search API to fetch and save new data
-    const searchResponse = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}&offset=${offset}&limit=20`);
+    const searchResponse = await fetch(
+        `/api/search?q=${encodeURIComponent(searchTerm)}&offset=${offset}&limit=20`
+    );
 
     if (!searchResponse.ok) {
         throw new Error('Failed to search');
@@ -56,7 +67,9 @@ const fetchSearch = async (searchTerm: string, offset: number = 0): Promise<Sear
     await searchResponse.json();
 
     // Then fetch results from our database
-    const resultsResponse = await fetch(`/api/results?q=${encodeURIComponent(searchTerm)}`);
+    const resultsResponse = await fetch(
+        `/api/results?q=${encodeURIComponent(searchTerm)}&offset=${offset}&limit=20`
+    );
 
     if (!resultsResponse.ok) {
         throw new Error('Failed to fetch results');
@@ -70,9 +83,15 @@ export const useSearch = (searchTerm: string) => {
         queryKey: ['search', searchTerm],
         queryFn: ({ pageParam = 0 }) => fetchSearch(searchTerm, pageParam),
         getNextPageParam: (lastPage, allPages) => {
-            // Since we're fetching from DB, we don't need pagination
-            // But we can still trigger more iTunes searches
-            return allPages.length < 5 ? allPages.length * 20 : undefined;
+            // Check if there are more results to fetch
+            if (lastPage.pagination?.hasMore) {
+                return lastPage.pagination.offset + lastPage.pagination.limit;
+            }
+            // If no more DB results, but we haven't searched iTunes enough times, continue searching
+            if (allPages.length < 5) {
+                return allPages.length * 20;
+            }
+            return undefined;
         },
         enabled: !!searchTerm && searchTerm.length > 0,
         staleTime: 5 * 60 * 1000, // 5 minutes
