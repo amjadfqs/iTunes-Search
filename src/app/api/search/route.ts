@@ -23,6 +23,8 @@ interface iTunesResult {
     artworkUrl30?: string;
     artworkUrl60?: string;
     artworkUrl100?: string;
+    artworkUrl160?: string;
+    artworkUrl600?: string;
     collectionPrice?: number;
     trackPrice?: number;
     collectionHdPrice?: number;
@@ -41,6 +43,16 @@ interface iTunesResult {
     contentAdvisoryRating?: string;
     shortDescription?: string;
     longDescription?: string;
+    description?: string;
+    feedUrl?: string;
+    episodeUrl?: string;
+    episodeGuid?: string;
+    episodeContentType?: string;
+    episodeFileExtension?: string;
+    closedCaptioning?: string;
+    artistIds?: number[];
+    genreIds?: string[];
+    genres?: Array<{ name: string; id: string }>;
 }
 
 interface iTunesResponse {
@@ -56,13 +68,15 @@ export async function GET(request: NextRequest) {
         const limit = parseInt(searchParams.get('limit') || '20');
 
         if (!searchTerm) {
-            return NextResponse.json({ error: 'Search term is required' }, { status: 400 });
+            return NextResponse.json(
+                { error: 'Search term is required' },
+                { status: 400 }
+            );
         }
 
-        // Call iTunes API with offset
-        const iTunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&limit=${limit}&offset=${offset}`;
+        // Call iTunes API with offset - only fetch podcasts and podcast episodes
+        const iTunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&limit=${limit}&offset=${offset}&media=podcast&entity=podcastEpisode,podcast`;
         const response = await fetch(iTunesUrl);
-        console.error('Fetching iTunes API:', response);
 
         if (!response.ok) {
             throw new Error('Failed to fetch from iTunes API');
@@ -85,7 +99,7 @@ export async function GET(request: NextRequest) {
             });
         }
 
-        const trackIds = resultsWithTrackId.map((result) => result.trackId!);
+        const trackIds = resultsWithTrackId.map((result) => BigInt(result.trackId!));
 
         // Find existing track IDs in database
         const existingResults = await prisma.searchResult.findMany({
@@ -99,53 +113,36 @@ export async function GET(request: NextRequest) {
             }
         });
 
-        const existingTrackIds = new Set(existingResults.map((r) => r.trackId));
+        const existingTrackIds = new Set(
+            existingResults.map((r) => r.trackId.toString())
+        );
 
         // Only save new results that don't exist in database
-        const newResults = resultsWithTrackId.filter((result) => !existingTrackIds.has(result.trackId!));
+        const newResults = resultsWithTrackId.filter(
+            (result) => !existingTrackIds.has(result.trackId!.toString())
+        );
 
         const savedResults = await Promise.all([
             // Save only new results
             ...newResults.map(async (result) => {
+                // Determine the best viewUrl to use
+                const viewUrl =
+                    result.trackViewUrl ||
+                    result.collectionViewUrl ||
+                    result.artistViewUrl;
+
                 return await prisma.searchResult.create({
                     data: {
-                        trackId: result.trackId!,
+                        trackId: BigInt(result.trackId!),
                         searchTerm,
-                        wrapperType: result.wrapperType,
                         kind: result.kind,
-                        artistId: result.artistId,
-                        collectionId: result.collectionId,
+                        trackName: result.trackName,
                         artistName: result.artistName,
                         collectionName: result.collectionName,
-                        trackName: result.trackName,
-                        collectionCensoredName: result.collectionCensoredName,
-                        trackCensoredName: result.trackCensoredName,
-                        artistViewUrl: result.artistViewUrl,
-                        collectionViewUrl: result.collectionViewUrl,
-                        trackViewUrl: result.trackViewUrl,
-                        previewUrl: result.previewUrl,
-                        artworkUrl30: result.artworkUrl30,
-                        artworkUrl60: result.artworkUrl60,
                         artworkUrl100: result.artworkUrl100,
-                        collectionPrice: result.collectionPrice,
-                        trackPrice: result.trackPrice,
-                        collectionHdPrice: result.collectionHdPrice,
-                        trackHdPrice: result.trackHdPrice,
-                        releaseDate: result.releaseDate,
-                        collectionExplicitness: result.collectionExplicitness,
-                        trackExplicitness: result.trackExplicitness,
-                        discCount: result.discCount,
-                        discNumber: result.discNumber,
-                        trackCount: result.trackCount,
-                        trackNumber: result.trackNumber,
-                        trackTimeMillis: result.trackTimeMillis,
-                        country: result.country,
-                        currency: result.currency,
-                        primaryGenreName: result.primaryGenreName,
-                        contentAdvisoryRating: result.contentAdvisoryRating,
-                        shortDescription: result.shortDescription,
-                        longDescription: result.longDescription
-                    }
+                        artworkUrl60: result.artworkUrl60,
+                        viewUrl: viewUrl
+                    } as any
                 });
             }),
             // Get existing results to return them too
@@ -159,16 +156,27 @@ export async function GET(request: NextRequest) {
         ]);
 
         // Filter out any null results and sort by trackId for consistency
-        const allResults = savedResults.filter((result) => result !== null).sort((a, b) => a!.trackId - b!.trackId);
+        const allResults = savedResults
+            .filter((result) => result !== null)
+            .sort((a, b) => Number(a!.trackId) - Number(b!.trackId));
 
-        return NextResponse.json({
-            resultCount: data.resultCount,
-            results: allResults,
-            searchTerm,
-            hasMore: data.results.length === limit,
-            newResultsCount: newResults.length,
-            offset: offset
-        });
+        // Convert BigInt to string for JSON serialization
+        const apiResponse = JSON.parse(
+            JSON.stringify(
+                {
+                    resultCount: data.resultCount,
+                    results: allResults,
+                    searchTerm,
+                    hasMore: data.results.length === limit && allResults.length > 0,
+                    newResultsCount: newResults.length,
+                    offset: offset,
+                    totalFetched: allResults.length
+                },
+                (key, value) => (typeof value === 'bigint' ? value.toString() : value)
+            )
+        );
+
+        return NextResponse.json(apiResponse);
     } catch (error) {
         console.error('Search API error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
