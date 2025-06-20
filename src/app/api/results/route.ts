@@ -17,34 +17,45 @@ export async function GET(request: NextRequest) {
         }
 
         // Get all results from database for this search term
+        // Using case-insensitive search with PostgreSQL
         const results = await prisma.searchResult.findMany({
             where: {
                 OR: [
                     {
                         searchTerm: {
-                            contains: searchTerm
+                            contains: searchTerm,
+                            mode: 'insensitive'
                         }
                     },
                     {
                         trackName: {
-                            contains: searchTerm
+                            contains: searchTerm,
+                            mode: 'insensitive'
                         }
                     },
                     {
                         artistName: {
-                            contains: searchTerm
+                            contains: searchTerm,
+                            mode: 'insensitive'
                         }
                     },
                     {
                         collectionName: {
-                            contains: searchTerm
+                            contains: searchTerm,
+                            mode: 'insensitive'
                         }
                     }
                 ]
             },
-            orderBy: {
-                createdAt: 'desc'
-            }
+            orderBy: [
+                // Prioritize exact matches in track name
+                {
+                    trackName: 'asc'
+                },
+                {
+                    createdAt: 'desc'
+                }
+            ]
         });
 
         // Define proper types
