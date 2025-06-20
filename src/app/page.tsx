@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useSearch } from '@/hooks/use-search';
 import { Badge } from '@/registry/new-york-v4/ui/badge';
@@ -8,13 +8,25 @@ import { Button } from '@/registry/new-york-v4/ui/button';
 import { Card, CardContent } from '@/registry/new-york-v4/ui/card';
 import { Input } from '@/registry/new-york-v4/ui/input';
 
-import { Database, ExternalLink, Loader2, Music, Search } from 'lucide-react';
+import {
+    ChevronLeft,
+    ChevronRight,
+    Database,
+    ExternalLink,
+    Loader2,
+    Music,
+    Search
+} from 'lucide-react';
 
 const Page = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [activeSearch, setActiveSearch] = useState('');
+    const [showScrollIndicators, setShowScrollIndicators] = useState(false);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-    const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useSearch(activeSearch);
+    const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
+        useSearch(activeSearch);
+    console.log('Search data:', data);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -23,20 +35,10 @@ const Page = () => {
         }
     };
 
-    const formatPrice = (price: number | null | undefined, currency: string | null | undefined) => {
-        if (!price) return 'Free';
-        return `${currency || '$'}${price.toFixed(2)}`;
-    };
-
-    const formatDate = (dateString: string | null) => {
-        if (!dateString) return '';
-        return new Date(dateString).toLocaleDateString();
-    };
-
     // Flatten all results from all pages
-    const allResults = data?.pages.flatMap((page) => page.results) || [];
-    const totalResultsFromItunes = data?.pages[0]?.resultCount || 0;
-    const totalNewResults = data?.pages.reduce((sum, page) => sum + (page.newResultsCount || 0), 0) || 0;
+    const allPodcasts = data?.pages.flatMap((page) => page.podcasts) || [];
+    const allEpisodes = data?.pages.flatMap((page) => page.episodes) || [];
+    const totalResults = allPodcasts.length + allEpisodes.length;
 
     // Infinite scroll handler
     useEffect(() => {
@@ -55,6 +57,34 @@ const Page = () => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+    // Check if podcasts scroll container needs indicators
+    useEffect(() => {
+        const checkScrollNeeded = () => {
+            if (scrollContainerRef.current) {
+                const { scrollWidth, clientWidth } = scrollContainerRef.current;
+                setShowScrollIndicators(scrollWidth > clientWidth);
+            }
+        };
+
+        checkScrollNeeded();
+        window.addEventListener('resize', checkScrollNeeded);
+        return () => window.removeEventListener('resize', checkScrollNeeded);
+    }, [allPodcasts]);
+
+    const scrollPodcasts = (direction: 'left' | 'right') => {
+        if (scrollContainerRef.current) {
+            const scrollAmount = 240; // Width of one card plus gap
+            const newScrollLeft =
+                scrollContainerRef.current.scrollLeft +
+                (direction === 'right' ? scrollAmount : -scrollAmount);
+
+            scrollContainerRef.current.scrollTo({
+                left: newScrollLeft,
+                behavior: 'smooth'
+            });
+        }
+    };
+
     return (
         <div className='bg-background min-h-screen'>
             <div className='container mx-auto px-4 py-8'>
@@ -62,7 +92,9 @@ const Page = () => {
                 <div className='mb-8 text-center'>
                     <div className='mb-4 flex items-center justify-center gap-2'>
                         <Music className='text-primary h-8 w-8' />
-                        <h1 className='text-3xl font-bold tracking-tight'>iTunes Search</h1>
+                        <h1 className='text-3xl font-bold tracking-tight'>
+                            iTunes Search
+                        </h1>
                     </div>
                     <p className='text-muted-foreground'>
                         Search for music, movies, apps, and more from the iTunes Store
@@ -83,7 +115,11 @@ const Page = () => {
                             />
                         </div>
                         <Button type='submit' disabled={isLoading || !searchTerm.trim()}>
-                            {isLoading ? <Loader2 className='h-4 w-4 animate-spin' /> : <Search className='h-4 w-4' />}
+                            {isLoading ? (
+                                <Loader2 className='h-4 w-4 animate-spin' />
+                            ) : (
+                                <Search className='h-4 w-4' />
+                            )}
                         </Button>
                     </div>
                 </form>
@@ -94,7 +130,10 @@ const Page = () => {
                         <Card className='border-destructive'>
                             <CardContent className='pt-6'>
                                 <p className='text-destructive'>
-                                    Error: {error instanceof Error ? error.message : 'Something went wrong'}
+                                    Error:{' '}
+                                    {error instanceof Error
+                                        ? error.message
+                                        : 'Something went wrong'}
                                 </p>
                             </CardContent>
                         </Card>
@@ -107,163 +146,195 @@ const Page = () => {
                         </div>
                     )}
 
-                    {data && allResults.length > 0 && (
-                        <div className='space-y-4'>
+                    {data && totalResults > 0 && (
+                        <div className='space-y-8'>
                             <div className='flex items-center justify-between'>
-                                <h2 className='text-xl font-semibold'>
-                                    Search Results for "{data.pages[0].searchTerm}"
-                                </h2>
-                                <div className='flex gap-2'>
-                                    <Badge variant='secondary'>
-                                        Showing {allResults.length} of {totalResultsFromItunes} result
-                                        {totalResultsFromItunes !== 1 ? 's' : ''}
-                                    </Badge>
-                                    {totalNewResults > 0 && (
-                                        <Badge variant='outline' className='border-green-600 text-green-600'>
-                                            <Database className='mr-1 h-3 w-3' />
-                                            {totalNewResults} new saved
-                                        </Badge>
-                                    )}
-                                </div>
+                                <h2 className='text-xl font-semibold'>Search Results</h2>
+                                <Badge variant='secondary'>
+                                    {totalResults} result{totalResults !== 1 ? 's' : ''}{' '}
+                                    found
+                                </Badge>
                             </div>
 
-                            <div className='grid gap-4'>
-                                {allResults.map((result) => (
-                                    <Card key={result.trackId} className='transition-shadow hover:shadow-md'>
-                                        <CardContent className='p-6'>
-                                            <div className='flex gap-4'>
-                                                {/* Artwork */}
-                                                {result.artworkUrl100 && (
-                                                    <div className='flex-shrink-0'>
-                                                        <img
-                                                            src={result.artworkUrl100}
-                                                            alt={result.trackName || result.collectionName || 'Artwork'}
-                                                            className='h-20 w-20 rounded-lg object-cover'
-                                                        />
-                                                    </div>
-                                                )}
-
-                                                {/* Content */}
-                                                <div className='min-w-0 flex-1'>
-                                                    <div className='flex items-start justify-between gap-4'>
-                                                        <div className='min-w-0 flex-1'>
-                                                            {result.trackName && (
-                                                                <h3 className='mb-1 text-lg leading-tight font-semibold'>
-                                                                    {result.trackName}
-                                                                </h3>
-                                                            )}
-                                                            {result.artistName && (
-                                                                <p className='text-muted-foreground mb-1'>
-                                                                    by {result.artistName}
-                                                                </p>
-                                                            )}
-                                                            {result.collectionName && (
-                                                                <p className='text-muted-foreground mb-2 text-sm'>
-                                                                    from {result.collectionName}
-                                                                </p>
-                                                            )}
-
-                                                            <div className='mb-3 flex flex-wrap gap-2'>
-                                                                {result.kind && (
-                                                                    <Badge variant='outline' className='text-xs'>
-                                                                        {result.kind}
+                            {/* Podcasts Section - Horizontal Scroll */}
+                            {allPodcasts.length > 0 && (
+                                <div className='space-y-4'>
+                                    <h3 className='flex items-center gap-2 text-lg font-semibold'>
+                                        <Music className='h-5 w-5' />
+                                        Podcasts ({allPodcasts.length})
+                                    </h3>
+                                    <div className='relative'>
+                                        {/* Scroll Indicators */}
+                                        {showScrollIndicators && (
+                                            <>
+                                                <Button
+                                                    variant='outline'
+                                                    size='sm'
+                                                    className='absolute top-1/2 left-0 z-10 h-8 w-8 -translate-y-1/2 rounded-full p-0 shadow-md'
+                                                    onClick={() =>
+                                                        scrollPodcasts('left')
+                                                    }>
+                                                    <ChevronLeft className='h-4 w-4' />
+                                                </Button>
+                                                <Button
+                                                    variant='outline'
+                                                    size='sm'
+                                                    className='absolute top-1/2 right-4 z-10 h-8 w-8 -translate-y-1/2 rounded-full p-0 shadow-md'
+                                                    onClick={() =>
+                                                        scrollPodcasts('right')
+                                                    }>
+                                                    <ChevronRight className='h-4 w-4' />
+                                                </Button>
+                                            </>
+                                        )}
+                                        <div
+                                            ref={scrollContainerRef}
+                                            className='scrollbar-hide flex gap-3 overflow-x-auto scroll-smooth pr-4 pb-4 md:gap-4'>
+                                            {allPodcasts.map((podcast) => (
+                                                <Card
+                                                    key={podcast._id}
+                                                    className='w-48 flex-shrink-0 transition-shadow hover:shadow-md sm:w-56 md:w-64'>
+                                                    <CardContent className='p-3 md:p-4'>
+                                                        <div className='space-y-2 md:space-y-3'>
+                                                            {/* Artwork */}
+                                                            {podcast.image && (
+                                                                <div className='relative'>
+                                                                    <img
+                                                                        src={
+                                                                            podcast.image
+                                                                        }
+                                                                        alt={
+                                                                            podcast.title
+                                                                        }
+                                                                        className='aspect-square w-full rounded-lg object-cover'
+                                                                    />
+                                                                    <Badge
+                                                                        variant='secondary'
+                                                                        className='absolute top-2 right-2 text-xs'>
+                                                                        Podcast
                                                                     </Badge>
-                                                                )}
-                                                                {result.primaryGenreName && (
-                                                                    <Badge variant='outline' className='text-xs'>
-                                                                        {result.primaryGenreName}
-                                                                    </Badge>
-                                                                )}
-                                                                {result.releaseDate && (
-                                                                    <Badge variant='outline' className='text-xs'>
-                                                                        {formatDate(result.releaseDate)}
-                                                                    </Badge>
-                                                                )}
-                                                            </div>
-
-                                                            {/* Additional Info */}
-                                                            {result.shortDescription && (
-                                                                <p className='text-muted-foreground mb-2 line-clamp-2 text-sm'>
-                                                                    {result.shortDescription}
-                                                                </p>
-                                                            )}
-
-                                                            {(result.trackPrice !== null ||
-                                                                result.collectionPrice !== null) && (
-                                                                <div className='flex flex-wrap gap-2 text-sm'>
-                                                                    {result.trackPrice !== null && (
-                                                                        <span className='font-medium'>
-                                                                            {result.wrapperType === 'track' &&
-                                                                            result.kind === 'tv-episode'
-                                                                                ? 'Episode'
-                                                                                : 'Track'}
-                                                                            :{' '}
-                                                                            {formatPrice(
-                                                                                result.trackPrice,
-                                                                                result.currency
-                                                                            )}
-                                                                        </span>
-                                                                    )}
-                                                                    {result.trackHdPrice !== null &&
-                                                                        result.trackHdPrice !== result.trackPrice && (
-                                                                            <span className='font-medium'>
-                                                                                HD:{' '}
-                                                                                {formatPrice(
-                                                                                    result.trackHdPrice,
-                                                                                    result.currency
-                                                                                )}
-                                                                            </span>
-                                                                        )}
-                                                                    {result.collectionPrice !== null && (
-                                                                        <span className='font-medium'>
-                                                                            {result.kind === 'tv-episode'
-                                                                                ? 'Season'
-                                                                                : 'Album'}
-                                                                            :{' '}
-                                                                            {formatPrice(
-                                                                                result.collectionPrice,
-                                                                                result.currency
-                                                                            )}
-                                                                        </span>
-                                                                    )}
                                                                 </div>
                                                             )}
-                                                        </div>
 
-                                                        {/* Links */}
-                                                        <div className='flex flex-col gap-2'>
-                                                            {result.trackViewUrl && (
-                                                                <Button size='sm' variant='outline' asChild>
-                                                                    <a
-                                                                        href={result.trackViewUrl}
-                                                                        target='_blank'
-                                                                        rel='noopener noreferrer'
-                                                                        className='flex items-center gap-1'>
-                                                                        <ExternalLink className='h-3 w-3' />
-                                                                        View
-                                                                    </a>
-                                                                </Button>
-                                                            )}
-                                                            {result.previewUrl && (
-                                                                <Button size='sm' variant='outline' asChild>
-                                                                    <a
-                                                                        href={result.previewUrl}
-                                                                        target='_blank'
-                                                                        rel='noopener noreferrer'
-                                                                        className='flex items-center gap-1'>
-                                                                        <Music className='h-3 w-3' />
-                                                                        Preview
-                                                                    </a>
-                                                                </Button>
-                                                            )}
+                                                            {/* Content */}
+                                                            <div className='space-y-1 md:space-y-2'>
+                                                                <h4 className='line-clamp-2 text-xs leading-tight font-semibold md:text-sm'>
+                                                                    {podcast.title}
+                                                                </h4>
+                                                                <p className='text-muted-foreground line-clamp-1 text-xs'>
+                                                                    by {podcast.author}
+                                                                </p>
+
+                                                                {/* Link */}
+                                                                {podcast.feed_url && (
+                                                                    <Button
+                                                                        size='sm'
+                                                                        variant='outline'
+                                                                        asChild
+                                                                        className='w-full text-xs'>
+                                                                        <a
+                                                                            href={
+                                                                                podcast.feed_url
+                                                                            }
+                                                                            target='_blank'
+                                                                            rel='noopener noreferrer'
+                                                                            className='flex items-center gap-1'>
+                                                                            <ExternalLink className='h-3 w-3' />
+                                                                            View Podcast
+                                                                        </a>
+                                                                    </Button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Episodes Section - Compact List */}
+                            {allEpisodes.length > 0 && (
+                                <div className='space-y-4'>
+                                    <h3 className='flex items-center gap-2 text-lg font-semibold'>
+                                        <Music className='h-5 w-5' />
+                                        Podcast Episodes ({allEpisodes.length})
+                                    </h3>
+                                    <div className='space-y-2 md:space-y-3'>
+                                        {allEpisodes.map((episode) => (
+                                            <Card
+                                                key={episode._id}
+                                                className='transition-shadow hover:shadow-sm'>
+                                                <CardContent className='p-3 md:p-4'>
+                                                    <div className='flex gap-2 md:gap-3'>
+                                                        {/* Artwork */}
+                                                        {episode.image && (
+                                                            <div className='flex-shrink-0'>
+                                                                <img
+                                                                    src={episode.image}
+                                                                    alt={episode.title}
+                                                                    className='h-12 w-12 rounded-md object-cover md:h-16 md:w-16'
+                                                                />
+                                                            </div>
+                                                        )}
+
+                                                        {/* Content */}
+                                                        <div className='min-w-0 flex-1'>
+                                                            <div className='flex items-start justify-between gap-2 md:gap-3'>
+                                                                <div className='min-w-0 flex-1'>
+                                                                    <h4 className='mb-1 line-clamp-2 text-xs leading-tight font-semibold md:text-sm'>
+                                                                        {episode.title}
+                                                                    </h4>
+                                                                    <p className='text-muted-foreground mb-1 line-clamp-1 text-xs'>
+                                                                        {
+                                                                            episode
+                                                                                .podcast
+                                                                                .title
+                                                                        }
+                                                                    </p>
+                                                                    <div className='flex items-center gap-2'>
+                                                                        <Badge
+                                                                            variant='outline'
+                                                                            className='px-2 py-0 text-xs'>
+                                                                            Podcast
+                                                                            Episode
+                                                                        </Badge>
+                                                                        <span className='text-muted-foreground text-xs'>
+                                                                            {new Date(
+                                                                                episode.published
+                                                                            ).toLocaleDateString()}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Action Button */}
+                                                                {episode.mediaURL && (
+                                                                    <Button
+                                                                        size='sm'
+                                                                        variant='outline'
+                                                                        asChild>
+                                                                        <a
+                                                                            href={
+                                                                                episode.mediaURL
+                                                                            }
+                                                                            target='_blank'
+                                                                            rel='noopener noreferrer'
+                                                                            className='flex items-center gap-1 px-2 text-xs'>
+                                                                            <ExternalLink className='h-3 w-3' />
+                                                                            Listen
+                                                                        </a>
+                                                                    </Button>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                ))}
-                            </div>
+                                                </CardContent>
+                                            </Card>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Load More Button */}
                             {hasNextPage && (
@@ -287,32 +358,34 @@ const Page = () => {
                                     </Button>
                                     {isFetchingNextPage && (
                                         <p className='text-muted-foreground text-xs'>
-                                            Fetching new results and saving unique items to database...
+                                            Fetching new results and saving unique items
+                                            to database...
                                         </p>
                                     )}
                                 </div>
                             )}
 
                             {/* Show message when no more results */}
-                            {!hasNextPage && allResults.length > 0 && (
+                            {!hasNextPage && totalResults > 0 && (
                                 <div className='pt-6 text-center'>
                                     <p className='text-muted-foreground text-sm'>
-                                        You've reached the end of the search results ({allResults.length} of{' '}
-                                        {totalResultsFromItunes} shown)
+                                        End of results ({totalResults} items loaded)
                                     </p>
                                 </div>
                             )}
                         </div>
                     )}
 
-                    {data && allResults.length === 0 && (
+                    {data && totalResults === 0 && (
                         <Card>
                             <CardContent className='pt-6 text-center'>
                                 <Music className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
                                 <p className='text-muted-foreground'>
-                                    No results found for "{data.pages[0].searchTerm}"
+                                    No podcasts or episodes found
                                 </p>
-                                <p className='text-muted-foreground mt-2 text-sm'>Try a different search term</p>
+                                <p className='text-muted-foreground mt-2 text-sm'>
+                                    Try a different search term
+                                </p>
                             </CardContent>
                         </Card>
                     )}

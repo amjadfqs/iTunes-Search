@@ -1,74 +1,78 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 
-interface SearchResult {
-    trackId: number;
-    searchTerm: string;
-    wrapperType?: string | null;
-    kind?: string | null;
-    artistId?: number | null;
-    collectionId?: number | null;
-    artistName?: string | null;
-    collectionName?: string | null;
-    trackName?: string | null;
-    collectionCensoredName?: string | null;
-    trackCensoredName?: string | null;
-    artistViewUrl?: string | null;
-    collectionViewUrl?: string | null;
-    trackViewUrl?: string | null;
-    previewUrl?: string | null;
-    artworkUrl30?: string | null;
-    artworkUrl60?: string | null;
-    artworkUrl100?: string | null;
-    collectionPrice?: number | null;
-    trackPrice?: number | null;
-    collectionHdPrice?: number | null;
-    trackHdPrice?: number | null;
-    releaseDate?: string | null;
-    collectionExplicitness?: string | null;
-    trackExplicitness?: string | null;
-    discCount?: number | null;
-    discNumber?: number | null;
-    trackCount?: number | null;
-    trackNumber?: number | null;
-    trackTimeMillis?: number | null;
-    country?: string | null;
-    currency?: string | null;
-    primaryGenreName?: string | null;
-    contentAdvisoryRating?: string | null;
-    shortDescription?: string | null;
-    longDescription?: string | null;
-    createdAt: string;
-    updatedAt: string;
+interface Podcast {
+    _id: string;
+    explicit: boolean;
+    private: boolean;
+    topResultFor: any[];
+    title: string;
+    author: string;
+    image: string;
+    slug: string;
+    feed_url: string;
+}
+
+interface Episode {
+    _id: string;
+    podcast_id: string;
+    description: string;
+    duration: string;
+    image: string;
+    published: string;
+    timestamp: number;
+    title: string;
+    podcast: {
+        _id: string;
+        explicit: boolean;
+        title: string;
+        image: string;
+        hue: string;
+        slug: string;
+    };
+    mediaURL: string;
+    hasVideo: boolean;
+    highlights: {
+        title: Array<{
+            value: string;
+            type: string;
+        }>;
+    };
 }
 
 interface SearchResponse {
-    resultCount: number;
-    results: SearchResult[];
-    searchTerm: string;
-    hasMore: boolean;
-    newResultsCount: number;
-    offset: number;
+    podcasts: Podcast[];
+    episodes: Episode[];
 }
 
 const fetchSearch = async (searchTerm: string, offset: number = 0): Promise<SearchResponse> => {
-    const response = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}&offset=${offset}&limit=20`);
+    // First trigger the search API to fetch and save new data
+    const searchResponse = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}&offset=${offset}&limit=20`);
 
-    if (!response.ok) {
+    if (!searchResponse.ok) {
         throw new Error('Failed to search');
     }
 
-    return response.json();
+    // Wait for the search to complete
+    await searchResponse.json();
+
+    // Then fetch results from our database
+    const resultsResponse = await fetch(`/api/results?q=${encodeURIComponent(searchTerm)}`);
+
+    if (!resultsResponse.ok) {
+        throw new Error('Failed to fetch results');
+    }
+
+    return resultsResponse.json();
 };
 
 export const useSearch = (searchTerm: string) => {
     return useInfiniteQuery({
         queryKey: ['search', searchTerm],
         queryFn: ({ pageParam = 0 }) => fetchSearch(searchTerm, pageParam),
-        getNextPageParam: (lastPage) => {
-            if (lastPage.hasMore) {
-                return lastPage.offset + 20;
-            }
-            return undefined;
+        getNextPageParam: (lastPage, allPages) => {
+            // Since we're fetching from DB, we don't need pagination
+            // But we can still trigger more iTunes searches
+            return allPages.length < 5 ? allPages.length * 20 : undefined;
         },
         enabled: !!searchTerm && searchTerm.length > 0,
         staleTime: 5 * 60 * 1000, // 5 minutes
