@@ -11,20 +11,20 @@ const withBundleAnalyzer = initializeBundleAnalyzer({
 const nextConfig: NextConfig = {
     output: 'standalone',
     outputFileTracingIncludes: {
-        "/*": ["./registry/**/*"],
-      },
-      images: {
+        '/*': ['./registry/**/*']
+    },
+    images: {
         remotePatterns: [
-          {
-            protocol: "https",
-            hostname: "avatars.githubusercontent.com",
-          },
-          {
-            protocol: "https",
-            hostname: "images.unsplash.com",
-          },
-        ],
-      },
+            {
+                protocol: 'https',
+                hostname: '**'
+            },
+            {
+                protocol: 'http',
+                hostname: '**'
+            }
+        ]
+    }
 };
 
 export default withBundleAnalyzer(nextConfig);

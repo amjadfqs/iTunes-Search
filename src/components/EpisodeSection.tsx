@@ -2,6 +2,8 @@
 
 import { useRef, useState } from 'react';
 
+import Image from 'next/image';
+
 import { Button } from '@/registry/new-york-v4/ui/button';
 
 import { ArrowLeft, ArrowRight, Grid3X3, List, Play } from 'lucide-react';
@@ -106,10 +108,12 @@ export const EpisodeSection = ({ episodes }: EpisodeSectionProps) => {
                                 {/* Episode Image with Play Button */}
                                 <div className='relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100'>
                                     {episode.image ? (
-                                        <img
+                                        <Image
                                             src={episode.image}
                                             alt={episode.title}
                                             className='h-full w-full object-cover'
+                                            fill
+                                            quality={90}
                                         />
                                     ) : (
                                         <div className='flex h-full w-full items-center justify-center bg-gray-200'>
@@ -187,10 +191,12 @@ export const EpisodeSection = ({ episodes }: EpisodeSectionProps) => {
                                     {/* Episode Image with Play Button */}
                                     <div className='relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100'>
                                         {episode.image ? (
-                                            <img
+                                            <Image
                                                 src={episode.image}
                                                 alt={episode.title}
                                                 className='h-full w-full object-cover'
+                                                fill
+                                                quality={90}
                                             />
                                         ) : (
                                             <div className='flex h-full w-full items-center justify-center bg-gray-200'>

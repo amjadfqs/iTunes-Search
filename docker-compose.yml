@@ -1,6 +1,5 @@
-version: '3.8'
-
 services:
+    # Database Service
     postgres:
         image: postgres:15-alpine
         container_name: itunes-search-postgres
@@ -23,6 +22,7 @@ services:
             timeout: 5s
             retries: 5
 
+    # Database Admin Interface
     pgadmin:
         image: dpage/pgadmin4:latest
         container_name: itunes-search-pgadmin
