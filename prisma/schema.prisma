@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model SearchResult {
+  trackId                Int      @id
+  searchTerm             String
+  wrapperType            String?
+  kind                   String?
+  artistId               Int?
+  collectionId           Int?
+  artistName             String?
+  collectionName         String?
+  trackName              String?
+  collectionCensoredName String?
+  trackCensoredName      String?
+  artistViewUrl          String?
+  collectionViewUrl      String?
+  trackViewUrl           String?
+  previewUrl             String?
+  artworkUrl30           String?
+  artworkUrl60           String?
+  artworkUrl100          String?
+  collectionPrice        Float?
+  trackPrice             Float?
+  collectionHdPrice      Float?
+  trackHdPrice           Float?
+  releaseDate            String?
+  collectionExplicitness String?
+  trackExplicitness      String?
+  discCount              Int?
+  discNumber             Int?
+  trackCount             Int?
+  trackNumber            Int?
+  trackTimeMillis        Int?
+  country                String?
+  currency               String?
+  primaryGenreName       String?
+  contentAdvisoryRating  String?
+  shortDescription       String?
+  longDescription        String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@map("search_results")
+}
