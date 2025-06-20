@@ -3,7 +3,6 @@
 import { useRef, useState } from 'react';
 
 import { Button } from '@/registry/new-york-v4/ui/button';
-import { Card, CardContent } from '@/registry/new-york-v4/ui/card';
 
 import { ArrowLeft, ArrowRight, Grid3X3, List } from 'lucide-react';
 

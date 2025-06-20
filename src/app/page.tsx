@@ -178,12 +178,6 @@ const Page = () => {
                                             </>
                                         )}
                                     </Button>
-                                    {isFetchingNextPage && (
-                                        <p className='text-muted-foreground text-xs'>
-                                            Fetching new results and saving unique items
-                                            to database...
-                                        </p>
-                                    )}
                                 </div>
                             )}
 

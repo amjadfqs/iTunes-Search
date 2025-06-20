@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 
 import { Button } from '@/registry/new-york-v4/ui/button';
 
-import { ArrowLeft, ArrowRight, Grid3X3, List, MoreVertical, Play } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Grid3X3, List, Play } from 'lucide-react';
 
 interface Episode {
     _id: string;
