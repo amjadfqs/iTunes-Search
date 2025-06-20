@@ -2,6 +2,8 @@
 
 import { useRef, useState } from 'react';
 
+import Image from 'next/image';
+
 import { Button } from '@/registry/new-york-v4/ui/button';
 
 import { ArrowLeft, ArrowRight, Grid3X3, List } from 'lucide-react';
@@ -70,10 +72,13 @@ export const PodcastSection = ({ podcasts }: PodcastSectionProps) => {
                             {/* Podcast Image */}
                             <div className='aspect-square overflow-hidden rounded-lg shadow-sm transition-shadow group-hover:shadow-md'>
                                 {podcast.image ? (
-                                    <img
+                                    <Image
                                         src={podcast.image}
                                         alt={podcast.title}
-                                        className='h-full w-full object-cover transition-transform group-hover:scale-110'
+                                        className='object-cover transition-transform group-hover:scale-110'
+                                        width={300}
+                                        height={300}
+                                        quality={90}
                                     />
                                 ) : (
                                     <div className='flex h-full w-full items-center justify-center bg-gray-200'>

@@ -13,7 +13,12 @@
         "fix-prisma": "node fix-prisma.js",
         "db:generate": "npx prisma generate",
         "db:push": "npx prisma db push",
-        "db:studio": "npx prisma studio"
+        "db:studio": "npx prisma studio",
+        "db:start": "docker-compose up -d",
+        "db:stop": "docker-compose down",
+        "db:restart": "docker-compose restart",
+        "db:logs": "docker-compose logs -f postgres",
+        "setup": "npm install --legacy-peer-deps && npm run db:generate && npm run db:start && npm run db:push"
     },
     "dependencies": {
         "@prisma/client": "^6.10.1",
