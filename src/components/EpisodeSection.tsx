@@ -3,9 +3,8 @@
 import { useRef, useState } from 'react';
 
 import { Button } from '@/registry/new-york-v4/ui/button';
-import { Card, CardContent } from '@/registry/new-york-v4/ui/card';
 
-import { ArrowLeft, ArrowRight, Grid3X3 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Grid3X3, List, MoreVertical, Play } from 'lucide-react';
 
 interface Episode {
     _id: string;
@@ -90,7 +89,11 @@ export const EpisodeSection = ({ episodes }: EpisodeSectionProps) => {
                     size='sm'
                     onClick={() => setIsGridView(!isGridView)}
                     className='h-8 w-8 p-0'>
-                    <Grid3X3 className='h-4 w-4' />
+                    {isGridView ? (
+                        <List className='h-4 w-4' />
+                    ) : (
+                        <Grid3X3 className='h-4 w-4' />
+                    )}
                 </Button>
             </div>
 
@@ -98,52 +101,58 @@ export const EpisodeSection = ({ episodes }: EpisodeSectionProps) => {
             {isGridView ? (
                 <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
                     {episodes.map((episode) => (
-                        <div
-                            key={episode._id}
-                            className='group cursor-pointer transition-transform hover:scale-[1.02]'>
-                            <Card className='h-full shadow-sm transition-shadow group-hover:shadow-md'>
-                                <CardContent className='p-4'>
-                                    <div className='flex gap-3'>
-                                        {/* Episode Image */}
-                                        <div className='flex-shrink-0'>
-                                            <div className='h-16 w-16 overflow-hidden rounded-lg'>
-                                                {episode.image ? (
-                                                    <img
-                                                        src={episode.image}
-                                                        alt={episode.title}
-                                                        className='h-full w-full object-cover transition-transform group-hover:scale-110'
-                                                    />
-                                                ) : (
-                                                    <div className='flex h-full w-full items-center justify-center bg-gray-200'>
-                                                        <span className='text-xs text-gray-400'>
-                                                            No Image
-                                                        </span>
-                                                    </div>
-                                                )}
-                                            </div>
+                        <div key={episode._id} className='group cursor-pointer'>
+                            <div className='flex gap-4 rounded-lg border border-white/30 bg-white/5 p-4 shadow-lg backdrop-blur-md transition-all hover:bg-white/30 hover:shadow-xl'>
+                                {/* Episode Image with Play Button */}
+                                <div className='relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100'>
+                                    {episode.image ? (
+                                        <img
+                                            src={episode.image}
+                                            alt={episode.title}
+                                            className='h-full w-full object-cover'
+                                        />
+                                    ) : (
+                                        <div className='flex h-full w-full items-center justify-center bg-gray-200'>
+                                            <span className='text-xs text-gray-400'>
+                                                No Image
+                                            </span>
                                         </div>
+                                    )}
 
-                                        {/* Episode Content */}
-                                        <div className='min-w-0 flex-1 space-y-1'>
-                                            {/* Title */}
-                                            <h4 className='group-hover:text-primary line-clamp-2 text-sm leading-tight font-medium transition-colors'>
-                                                {episode.title}
-                                            </h4>
-
-                                            {/* Author/Podcast */}
-                                            <p className='text-muted-foreground line-clamp-1 text-xs'>
-                                                {episode.podcast.title}
-                                            </p>
-
-                                            {/* Release Date and Duration */}
-                                            <div className='flex items-center justify-between text-xs text-muted-foreground'>
-                                                <span>{formatReleaseDate(episode.published)}</span>
-                                                <span>{formatDuration(episode.duration)}</span>
-                                            </div>
+                                    {/* Play Button Overlay */}
+                                    <div className='absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100'>
+                                        <div className='flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-lg'>
+                                            <Play
+                                                className='ml-0.5 h-4 w-4 text-gray-900'
+                                                fill='currentColor'
+                                            />
                                         </div>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                </div>
+
+                                {/* Episode Metadata */}
+                                <div className='flex min-w-0 flex-1 flex-col justify-between'>
+                                    <div className='space-y-1'>
+                                        {/* Podcast Name */}
+                                        <p className='cursor-pointer truncate text-sm font-medium text-[#E3BD71]'>
+                                            {episode.podcast.title}
+                                        </p>
+
+                                        {/* Episode Title */}
+                                        <h4 className='line-clamp-2 cursor-pointer text-sm font-medium text-white'>
+                                            {episode.title}
+                                        </h4>
+                                    </div>
+
+                                    {/* Release Date and Duration */}
+                                    <div className='flex items-center justify-between text-sm text-gray-500'>
+                                        <span>
+                                            {formatReleaseDate(episode.published)}
+                                        </span>
+                                        <span>{formatDuration(episode.duration)}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -171,51 +180,63 @@ export const EpisodeSection = ({ episodes }: EpisodeSectionProps) => {
                         ref={scrollContainerRef}
                         className='scrollbar-hide flex gap-4 overflow-x-auto scroll-smooth pr-4 pb-4'>
                         {episodes.map((episode) => (
-                            <Card
+                            <div
                                 key={episode._id}
-                                className='w-80 flex-shrink-0 transition-shadow hover:shadow-md'>
-                                <CardContent className='p-4'>
-                                    <div className='flex gap-3'>
-                                        {/* Episode Image */}
-                                        <div className='flex-shrink-0'>
-                                            <div className='h-16 w-16 overflow-hidden rounded-lg'>
-                                                {episode.image ? (
-                                                    <img
-                                                        src={episode.image}
-                                                        alt={episode.title}
-                                                        className='h-full w-full object-cover'
-                                                    />
-                                                ) : (
-                                                    <div className='flex h-full w-full items-center justify-center bg-gray-200'>
-                                                        <span className='text-xs text-gray-400'>
-                                                            No Image
-                                                        </span>
-                                                    </div>
-                                                )}
+                                className='group w-96 flex-shrink-0 cursor-pointer'>
+                                <div className='flex gap-4 rounded-lg border border-white/30 bg-white/5 p-4 shadow-lg backdrop-blur-md transition-all hover:bg-white/30 hover:shadow-xl'>
+                                    {/* Episode Image with Play Button */}
+                                    <div className='relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100'>
+                                        {episode.image ? (
+                                            <img
+                                                src={episode.image}
+                                                alt={episode.title}
+                                                className='h-full w-full object-cover'
+                                            />
+                                        ) : (
+                                            <div className='flex h-full w-full items-center justify-center bg-gray-200'>
+                                                <span className='text-xs text-gray-400'>
+                                                    No Image
+                                                </span>
                                             </div>
-                                        </div>
+                                        )}
 
-                                        {/* Episode Content */}
-                                        <div className='min-w-0 flex-1 space-y-1'>
-                                            {/* Title */}
-                                            <h4 className='line-clamp-2 text-sm leading-tight font-medium'>
-                                                {episode.title}
-                                            </h4>
-
-                                            {/* Author/Podcast */}
-                                            <p className='text-muted-foreground line-clamp-1 text-xs'>
-                                                {episode.podcast.title}
-                                            </p>
-
-                                            {/* Release Date and Duration */}
-                                            <div className='flex items-center justify-between text-xs text-muted-foreground'>
-                                                <span>{formatReleaseDate(episode.published)}</span>
-                                                <span>{formatDuration(episode.duration)}</span>
+                                        {/* Play Button Overlay */}
+                                        <div className='absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100'>
+                                            <div className='flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-lg'>
+                                                <Play
+                                                    className='ml-0.5 h-4 w-4 text-gray-900'
+                                                    fill='currentColor'
+                                                />
                                             </div>
                                         </div>
                                     </div>
-                                </CardContent>
-                            </Card>
+
+                                    {/* Episode Metadata */}
+                                    <div className='flex min-w-0 flex-1 flex-col justify-between'>
+                                        <div className='space-y-1'>
+                                            {/* Podcast Name */}
+                                            <p className='cursor-pointer truncate text-sm font-medium text-[#E3BD71]'>
+                                                {episode.podcast.title}
+                                            </p>
+
+                                            {/* Episode Title */}
+                                            <h4 className='line-clamp-2 cursor-pointer text-sm font-medium text-white'>
+                                                {episode.title}
+                                            </h4>
+                                        </div>
+
+                                        {/* Release Date and Duration */}
+                                        <div className='flex items-center justify-between text-sm text-gray-500'>
+                                            <span>
+                                                {formatReleaseDate(episode.published)}
+                                            </span>
+                                            <span>
+                                                {formatDuration(episode.duration)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         ))}
                     </div>
                 </div>

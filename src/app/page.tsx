@@ -95,21 +95,8 @@ const Page = () => {
     return (
         <div className='bg-background min-h-screen'>
             <div className='container mx-auto px-4 py-8'>
-                {/* Header */}
-                <div className='mb-8 text-center'>
-                    <div className='mb-4 flex items-center justify-center gap-2'>
-                        <Music className='text-primary h-8 w-8' />
-                        <h1 className='text-3xl font-bold tracking-tight'>
-                            iTunes Search
-                        </h1>
-                    </div>
-                    <p className='text-muted-foreground'>
-                        Search for music, movies, apps, and more from the iTunes Store
-                    </p>
-                </div>
-
                 {/* Search Form */}
-                <form onSubmit={handleSearch} className='mx-auto mb-8 max-w-xl'>
+                <form onSubmit={handleSearch} className='mx-auto mb-8 max-w-4xl'>
                     <div className='flex gap-2'>
                         <div className='relative flex-1'>
                             <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
@@ -142,7 +129,7 @@ const Page = () => {
                 </form>
 
                 {/* Results */}
-                <div className='mx-auto max-w-4xl'>
+                <div className='mx-auto max-w-6xl'>
                     {error && (
                         <Card className='border-destructive'>
                             <CardContent className='pt-6'>

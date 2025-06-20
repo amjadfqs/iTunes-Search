@@ -5,7 +5,7 @@ import { useRef, useState } from 'react';
 import { Button } from '@/registry/new-york-v4/ui/button';
 import { Card, CardContent } from '@/registry/new-york-v4/ui/card';
 
-import { ArrowLeft, ArrowRight, Grid3X3 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Grid3X3, List } from 'lucide-react';
 
 interface Podcast {
     _id: string;
@@ -53,7 +53,11 @@ export const PodcastSection = ({ podcasts }: PodcastSectionProps) => {
                     size='sm'
                     onClick={() => setIsGridView(!isGridView)}
                     className='h-8 w-8 p-0'>
-                    <Grid3X3 className='h-4 w-4' />
+                    {isGridView ? (
+                        <List className='h-4 w-4' />
+                    ) : (
+                        <Grid3X3 className='h-4 w-4' />
+                    )}
                 </Button>
             </div>
 
@@ -117,34 +121,36 @@ export const PodcastSection = ({ podcasts }: PodcastSectionProps) => {
                         ref={scrollContainerRef}
                         className='scrollbar-hide flex gap-4 overflow-x-auto scroll-smooth pr-4 pb-4'>
                         {podcasts.map((podcast) => (
-                            <Card
+                            <div
                                 key={podcast._id}
-                                className='w-48 flex-shrink-0 transition-shadow hover:shadow-md'>
-                                <CardContent className='p-3'>
-                                    <div className='space-y-3'>
-                                        {/* Artwork */}
-                                        {podcast.image && (
-                                            <div className='relative'>
-                                                <img
-                                                    src={podcast.image}
-                                                    alt={podcast.title}
-                                                    className='aspect-square w-full rounded-md object-cover'
-                                                />
-                                            </div>
-                                        )}
-
-                                        {/* Title */}
-                                        <div>
-                                            <h4 className='line-clamp-2 text-sm font-medium'>
-                                                {podcast.title}
-                                            </h4>
-                                            <p className='text-muted-foreground mt-1 line-clamp-1 text-xs'>
-                                                {podcast.author}
-                                            </p>
+                                className='group w-48 flex-shrink-0 cursor-pointer space-y-2 transition-transform hover:scale-105'>
+                                {/* Podcast Image */}
+                                <div className='aspect-square overflow-hidden rounded-lg shadow-sm transition-shadow group-hover:shadow-md'>
+                                    {podcast.image ? (
+                                        <img
+                                            src={podcast.image}
+                                            alt={podcast.title}
+                                            className='h-full w-full object-cover transition-transform group-hover:scale-110'
+                                        />
+                                    ) : (
+                                        <div className='flex h-full w-full items-center justify-center bg-gray-200'>
+                                            <span className='text-sm text-gray-400'>
+                                                No Image
+                                            </span>
                                         </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                                    )}
+                                </div>
+
+                                {/* Podcast Title */}
+                                <h4 className='group-hover:text-primary line-clamp-2 text-sm leading-tight font-medium transition-colors'>
+                                    {podcast.title}
+                                </h4>
+
+                                {/* Author/Description */}
+                                <p className='text-muted-foreground line-clamp-1 text-xs'>
+                                    {podcast.author}
+                                </p>
+                            </div>
                         ))}
                     </div>
                 </div>
