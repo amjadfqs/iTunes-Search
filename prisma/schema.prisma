@@ -15,8 +15,8 @@ model Podcast {
   searchTerm    String
   trackName     String?
   artistName    String?
+  artworkUrl600 String?
   artworkUrl100 String?
-  artworkUrl60  String?
   viewUrl       String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -33,8 +33,8 @@ model PodcastEpisode {
   trackName       String?
   artistName      String?
   collectionName  String?
+  artworkUrl600   String?
   artworkUrl100   String?
-  artworkUrl60    String?
   viewUrl         String?
   trackTimeMillis Int?
   releaseDate     String?

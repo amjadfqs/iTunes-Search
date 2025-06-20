@@ -20,10 +20,7 @@ interface iTunesResult {
     collectionViewUrl?: string;
     trackViewUrl?: string;
     previewUrl?: string;
-    artworkUrl30?: string;
-    artworkUrl60?: string;
     artworkUrl100?: string;
-    artworkUrl160?: string;
     artworkUrl600?: string;
     collectionPrice?: number;
     trackPrice?: number;
@@ -157,8 +154,8 @@ export async function GET(request: NextRequest) {
                         searchTerm,
                         trackName: result.trackName,
                         artistName: result.artistName,
+                        artworkUrl600: result.artworkUrl600,
                         artworkUrl100: result.artworkUrl100,
-                        artworkUrl60: result.artworkUrl60,
                         viewUrl: viewUrl
                     }
                 });
@@ -180,8 +177,8 @@ export async function GET(request: NextRequest) {
                         trackName: result.trackName,
                         artistName: result.artistName,
                         collectionName: result.collectionName,
+                        artworkUrl600: result.artworkUrl600,
                         artworkUrl100: result.artworkUrl100,
-                        artworkUrl60: result.artworkUrl60,
                         viewUrl: viewUrl,
                         trackTimeMillis: result.trackTimeMillis,
                         releaseDate: result.releaseDate

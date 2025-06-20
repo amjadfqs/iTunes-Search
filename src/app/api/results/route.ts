@@ -195,7 +195,7 @@ export async function GET(request: NextRequest) {
             _id: podcast.trackId.toString(),
             title: podcast.trackName || 'Unknown Title',
             author: podcast.artistName || 'Unknown Author',
-            image: podcast.artworkUrl100 || podcast.artworkUrl60 || '',
+            image: podcast.artworkUrl600 || podcast.artworkUrl100 || '',
             slug: (podcast.trackName || '')
                 .toLowerCase()
                 .replace(/[^a-z0-9]+/g, '-')
@@ -209,14 +209,14 @@ export async function GET(request: NextRequest) {
             podcast_id: episode.collectionName || 'unknown',
             description: 'Episode description not available',
             duration: episode.trackTimeMillis?.toString() || '0',
-            image: episode.artworkUrl100 || episode.artworkUrl60 || '',
+            image: episode.artworkUrl600 || episode.artworkUrl100 || '',
             published: episode?.releaseDate || new Date().toISOString(),
             timestamp: Math.floor(new Date(episode.createdAt).getTime() / 1000),
             title: episode.trackName || 'Unknown Episode',
             podcast: {
                 _id: episode.collectionName || 'unknown',
                 title: episode.collectionName || 'Unknown Show',
-                image: episode.artworkUrl100 || episode.artworkUrl60 || '',
+                image: episode.artworkUrl600 || episode.artworkUrl100 || '',
                 slug: (episode.collectionName || '')
                     .toLowerCase()
                     .replace(/[^a-z0-9]+/g, '-')
