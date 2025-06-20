@@ -28,16 +28,18 @@ model Podcast {
 }
 
 model PodcastEpisode {
-  trackId        BigInt   @id
-  searchTerm     String
-  trackName      String?
-  artistName     String?
-  collectionName String?
-  artworkUrl100  String?
-  artworkUrl60   String?
-  viewUrl        String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  trackId         BigInt   @id
+  searchTerm      String
+  trackName       String?
+  artistName      String?
+  collectionName  String?
+  artworkUrl100   String?
+  artworkUrl60    String?
+  viewUrl         String?
+  trackTimeMillis Int?
+  releaseDate     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   // Foreign key to podcast
   podcastId BigInt?

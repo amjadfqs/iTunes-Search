@@ -159,9 +159,6 @@ export async function GET(request: NextRequest) {
         // Define proper types
         interface PodcastResult {
             _id: string;
-            explicit: boolean;
-            private: boolean;
-            topResultFor: any[];
             title: string;
             author: string;
             image: string;
@@ -180,14 +177,11 @@ export async function GET(request: NextRequest) {
             title: string;
             podcast: {
                 _id: string;
-                explicit: boolean;
                 title: string;
                 image: string;
-                hue: string;
                 slug: string;
             };
             mediaURL: string;
-            hasVideo: boolean;
             highlights: {
                 title: Array<{
                     value: string;
@@ -199,9 +193,6 @@ export async function GET(request: NextRequest) {
         // Format podcasts
         const formattedPodcasts: PodcastResult[] = podcasts.map((podcast) => ({
             _id: podcast.trackId.toString(),
-            explicit: false,
-            private: false,
-            topResultFor: [],
             title: podcast.trackName || 'Unknown Title',
             author: podcast.artistName || 'Unknown Author',
             image: podcast.artworkUrl100 || podcast.artworkUrl60 || '',
@@ -217,24 +208,21 @@ export async function GET(request: NextRequest) {
             _id: episode.trackId.toString(),
             podcast_id: episode.collectionName || 'unknown',
             description: 'Episode description not available',
-            duration: '0',
+            duration: episode.trackTimeMillis?.toString() || '0',
             image: episode.artworkUrl100 || episode.artworkUrl60 || '',
-            published: episode.createdAt.toISOString(),
+            published: episode?.releaseDate || new Date().toISOString(),
             timestamp: Math.floor(new Date(episode.createdAt).getTime() / 1000),
             title: episode.trackName || 'Unknown Episode',
             podcast: {
                 _id: episode.collectionName || 'unknown',
-                explicit: false,
                 title: episode.collectionName || 'Unknown Show',
                 image: episode.artworkUrl100 || episode.artworkUrl60 || '',
-                hue: '39.31034482758622',
                 slug: (episode.collectionName || '')
                     .toLowerCase()
                     .replace(/[^a-z0-9]+/g, '-')
                     .replace(/^-|-$/g, '')
             },
             mediaURL: episode.viewUrl || '',
-            hasVideo: false,
             highlights: {
                 title: [
                     {

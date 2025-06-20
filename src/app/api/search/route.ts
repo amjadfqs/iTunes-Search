@@ -182,7 +182,9 @@ export async function GET(request: NextRequest) {
                         collectionName: result.collectionName,
                         artworkUrl100: result.artworkUrl100,
                         artworkUrl60: result.artworkUrl60,
-                        viewUrl: viewUrl
+                        viewUrl: viewUrl,
+                        trackTimeMillis: result.trackTimeMillis,
+                        releaseDate: result.releaseDate
                     }
                 });
             })
