@@ -18,9 +18,44 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // Get paginated results from database for this search term
-        // Using case-insensitive search with PostgreSQL
-        const results = await prisma.searchResult.findMany({
+        // Get paginated podcasts from database
+        const podcasts = await prisma.podcast.findMany({
+            where: {
+                OR: [
+                    {
+                        searchTerm: {
+                            contains: searchTerm,
+                            mode: 'insensitive'
+                        }
+                    },
+                    {
+                        trackName: {
+                            contains: searchTerm,
+                            mode: 'insensitive'
+                        }
+                    },
+                    {
+                        artistName: {
+                            contains: searchTerm,
+                            mode: 'insensitive'
+                        }
+                    }
+                ]
+            },
+            orderBy: [
+                {
+                    trackName: 'asc'
+                },
+                {
+                    createdAt: 'desc'
+                }
+            ],
+            skip: offset,
+            take: limit
+        });
+
+        // Get paginated episodes from database
+        const episodes = await prisma.podcastEpisode.findMany({
             where: {
                 OR: [
                     {
@@ -50,7 +85,6 @@ export async function GET(request: NextRequest) {
                 ]
             },
             orderBy: [
-                // Prioritize exact matches in track name
                 {
                     trackName: 'asc'
                 },
@@ -63,36 +97,64 @@ export async function GET(request: NextRequest) {
         });
 
         // Get total count for pagination info
-        const totalCount = await prisma.searchResult.count({
-            where: {
-                OR: [
-                    {
-                        searchTerm: {
-                            contains: searchTerm,
-                            mode: 'insensitive'
+        const [podcastCount, episodeCount] = await Promise.all([
+            prisma.podcast.count({
+                where: {
+                    OR: [
+                        {
+                            searchTerm: {
+                                contains: searchTerm,
+                                mode: 'insensitive'
+                            }
+                        },
+                        {
+                            trackName: {
+                                contains: searchTerm,
+                                mode: 'insensitive'
+                            }
+                        },
+                        {
+                            artistName: {
+                                contains: searchTerm,
+                                mode: 'insensitive'
+                            }
                         }
-                    },
-                    {
-                        trackName: {
-                            contains: searchTerm,
-                            mode: 'insensitive'
+                    ]
+                }
+            }),
+            prisma.podcastEpisode.count({
+                where: {
+                    OR: [
+                        {
+                            searchTerm: {
+                                contains: searchTerm,
+                                mode: 'insensitive'
+                            }
+                        },
+                        {
+                            trackName: {
+                                contains: searchTerm,
+                                mode: 'insensitive'
+                            }
+                        },
+                        {
+                            artistName: {
+                                contains: searchTerm,
+                                mode: 'insensitive'
+                            }
+                        },
+                        {
+                            collectionName: {
+                                contains: searchTerm,
+                                mode: 'insensitive'
+                            }
                         }
-                    },
-                    {
-                        artistName: {
-                            contains: searchTerm,
-                            mode: 'insensitive'
-                        }
-                    },
-                    {
-                        collectionName: {
-                            contains: searchTerm,
-                            mode: 'insensitive'
-                        }
-                    }
-                ]
-            }
-        });
+                    ]
+                }
+            })
+        ]);
+
+        const totalCount = podcastCount + episodeCount;
 
         // Define proper types
         interface PodcastResult {
@@ -134,79 +196,65 @@ export async function GET(request: NextRequest) {
             };
         }
 
-        // Separate podcasts and episodes
-        const podcasts: PodcastResult[] = [];
-        const episodes: EpisodeResult[] = [];
+        // Format podcasts
+        const formattedPodcasts: PodcastResult[] = podcasts.map((podcast) => ({
+            _id: podcast.trackId.toString(),
+            explicit: false,
+            private: false,
+            topResultFor: [],
+            title: podcast.trackName || 'Unknown Title',
+            author: podcast.artistName || 'Unknown Author',
+            image: podcast.artworkUrl100 || podcast.artworkUrl60 || '',
+            slug: (podcast.trackName || '')
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-|-$/g, ''),
+            feed_url: podcast.viewUrl || ''
+        }));
 
-        results.forEach((result) => {
-            if (result.kind === 'podcast') {
-                podcasts.push({
-                    _id: result.trackId.toString(),
-                    explicit: false, // We don't store this info
-                    private: false,
-                    topResultFor: [],
-                    title: result.trackName || result.collectionName || 'Unknown Title',
-                    author: result.artistName || 'Unknown Author',
-                    image: result.artworkUrl100 || result.artworkUrl60 || '',
-                    slug: (result.trackName || result.collectionName || '')
-                        .toLowerCase()
-                        .replace(/[^a-z0-9]+/g, '-')
-                        .replace(/^-|-$/g, ''),
-                    feed_url: result.viewUrl || ''
-                });
-            } else if (result.kind === 'podcast-episode') {
-                episodes.push({
-                    _id: result.trackId.toString(),
-                    podcast_id: result.collectionName || 'unknown',
-                    description: 'Episode description not available', // We don't store descriptions
-                    duration: '0', // We don't store duration
-                    image: result.artworkUrl100 || result.artworkUrl60 || '',
-                    published: result.createdAt.toISOString(),
-                    timestamp: Math.floor(new Date(result.createdAt).getTime() / 1000),
-                    title: result.trackName || 'Unknown Episode',
-                    podcast: {
-                        _id: result.collectionName || 'unknown',
-                        explicit: false,
-                        title: result.collectionName || 'Unknown Show',
-                        image: result.artworkUrl100 || result.artworkUrl60 || '',
-                        hue: '39.31034482758622', // Default hue
-                        slug: (result.collectionName || '')
-                            .toLowerCase()
-                            .replace(/[^a-z0-9]+/g, '-')
-                            .replace(/^-|-$/g, '')
-                    },
-                    mediaURL: result.viewUrl || '',
-                    hasVideo: false, // Podcast episodes are audio
-                    highlights: {
-                        title: [
-                            {
-                                value: result.trackName || 'Unknown',
-                                type: 'hit'
-                            }
-                        ]
+        // Format episodes
+        const formattedEpisodes: EpisodeResult[] = episodes.map((episode) => ({
+            _id: episode.trackId.toString(),
+            podcast_id: episode.collectionName || 'unknown',
+            description: 'Episode description not available',
+            duration: '0',
+            image: episode.artworkUrl100 || episode.artworkUrl60 || '',
+            published: episode.createdAt.toISOString(),
+            timestamp: Math.floor(new Date(episode.createdAt).getTime() / 1000),
+            title: episode.trackName || 'Unknown Episode',
+            podcast: {
+                _id: episode.collectionName || 'unknown',
+                explicit: false,
+                title: episode.collectionName || 'Unknown Show',
+                image: episode.artworkUrl100 || episode.artworkUrl60 || '',
+                hue: '39.31034482758622',
+                slug: (episode.collectionName || '')
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/^-|-$/g, '')
+            },
+            mediaURL: episode.viewUrl || '',
+            hasVideo: false,
+            highlights: {
+                title: [
+                    {
+                        value: episode.trackName || 'Unknown',
+                        type: 'hit'
                     }
-                });
+                ]
+            }
+        }));
+
+        return NextResponse.json({
+            podcasts: formattedPodcasts,
+            episodes: formattedEpisodes,
+            pagination: {
+                offset,
+                limit,
+                total: totalCount,
+                hasMore: offset + limit < totalCount
             }
         });
-
-        // Convert BigInt to string for JSON serialization
-        const apiResponse = JSON.parse(
-            JSON.stringify(
-                {
-                    podcasts,
-                    episodes,
-                    pagination: {
-                        offset,
-                        limit,
-                        total: totalCount,
-                        hasMore: offset + limit < totalCount
-                    }
-                },
-                (key, value) => (typeof value === 'bigint' ? value.toString() : value)
-            )
-        );
-
-        return NextResponse.json(apiResponse);
     } catch (error) {
         console.error('Results API error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

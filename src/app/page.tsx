@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import { useRouter, useSearchParams } from 'next/navigation';
+
 import { useSearch } from '@/hooks/use-search';
 import { Badge } from '@/registry/new-york-v4/ui/badge';
 import { Button } from '@/registry/new-york-v4/ui/button';
@@ -18,20 +20,61 @@ import {
 } from 'lucide-react';
 
 const Page = () => {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [activeSearch, setActiveSearch] = useState('');
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const activeSearch = searchParams.get('q') || '';
+    const [searchTerm, setSearchTerm] = useState(activeSearch);
     const [showScrollIndicators, setShowScrollIndicators] = useState(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
         useSearch(activeSearch);
-    console.log('Search data:', data);
+
+    // Update input when URL changes
+    useEffect(() => {
+        setSearchTerm(activeSearch);
+    }, [activeSearch]);
+
+    // Handle keyboard shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Focus search input when pressing '/' or 'Ctrl+K'
+            if (e.key === '/' || (e.ctrlKey && e.key === 'k')) {
+                e.preventDefault();
+                const searchInput = document.querySelector(
+                    'input[type="text"]'
+                ) as HTMLInputElement;
+                searchInput?.focus();
+            }
+            // Clear search when pressing Escape
+            if (e.key === 'Escape' && activeSearch) {
+                e.preventDefault();
+                clearSearch();
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [activeSearch]);
+
+    const updateSearchParam = (query: string) => {
+        if (query.trim()) {
+            const params = new URLSearchParams();
+            params.set('q', query.trim());
+            router.push(`/?${params.toString()}`);
+        } else {
+            router.push('/');
+        }
+    };
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        if (searchTerm.trim()) {
-            setActiveSearch(searchTerm.trim());
-        }
+        updateSearchParam(searchTerm);
+    };
+
+    const clearSearch = () => {
+        setSearchTerm('');
+        router.push('/');
     };
 
     // Flatten all results from all pages
@@ -107,11 +150,21 @@ const Page = () => {
                             <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
                             <Input
                                 type='text'
-                                placeholder='Search for songs, artists, albums...'
+                                placeholder='Search for songs, artists, albums... (Press / to focus)'
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className='pl-10'
+                                className='pr-10 pl-10'
                             />
+                            {searchTerm && (
+                                <Button
+                                    type='button'
+                                    variant='ghost'
+                                    size='sm'
+                                    className='absolute top-1/2 right-2 h-6 w-6 -translate-y-1/2 p-0'
+                                    onClick={clearSearch}>
+                                    ×
+                                </Button>
+                            )}
                         </div>
                         <Button type='submit' disabled={isLoading || !searchTerm.trim()}>
                             {isLoading ? (

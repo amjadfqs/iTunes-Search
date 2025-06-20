@@ -64,8 +64,6 @@ export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const searchTerm = searchParams.get('q');
-        const offset = parseInt(searchParams.get('offset') || '0');
-        const limit = parseInt(searchParams.get('limit') || '20');
 
         if (!searchTerm) {
             return NextResponse.json(
@@ -74,8 +72,8 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // Call iTunes API with offset - only fetch podcasts and podcast episodes
-        const iTunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&limit=${limit}&offset=${offset}&media=podcast&entity=podcastEpisode,podcast`;
+        // Call iTunes API - fetch all podcasts and podcast episodes (default limit is 50)
+        const iTunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(searchTerm)}&limit=200&media=podcast&entity=podcastEpisode,podcast`;
         const response = await fetch(iTunesUrl);
 
         if (!response.ok) {
@@ -93,19 +91,22 @@ export async function GET(request: NextRequest) {
                 resultCount: data.resultCount,
                 results: [],
                 searchTerm,
-                hasMore: data.results.length === limit,
-                newResultsCount: 0,
-                offset: offset
+                newResultsCount: 0
             });
         }
 
-        const trackIds = resultsWithTrackId.map((result) => BigInt(result.trackId!));
+        // Separate podcasts and episodes
+        const podcasts = resultsWithTrackId.filter((result) => result.kind === 'podcast');
+        const episodes = resultsWithTrackId.filter(
+            (result) => result.kind === 'podcast-episode'
+        );
 
-        // Find existing track IDs in database
-        const existingResults = await prisma.searchResult.findMany({
+        // Find existing podcasts
+        const podcastTrackIds = podcasts.map((result) => BigInt(result.trackId!));
+        const existingPodcasts = await prisma.podcast.findMany({
             where: {
                 trackId: {
-                    in: trackIds
+                    in: podcastTrackIds
                 }
             },
             select: {
@@ -113,70 +114,86 @@ export async function GET(request: NextRequest) {
             }
         });
 
-        const existingTrackIds = new Set(
-            existingResults.map((r) => r.trackId.toString())
+        const existingPodcastIds = new Set(
+            existingPodcasts.map((p) => p.trackId.toString())
         );
 
-        // Only save new results that don't exist in database
-        const newResults = resultsWithTrackId.filter(
-            (result) => !existingTrackIds.has(result.trackId!.toString())
+        // Find existing episodes
+        const episodeTrackIds = episodes.map((result) => BigInt(result.trackId!));
+        const existingEpisodes = await prisma.podcastEpisode.findMany({
+            where: {
+                trackId: {
+                    in: episodeTrackIds
+                }
+            },
+            select: {
+                trackId: true
+            }
+        });
+
+        const existingEpisodeIds = new Set(
+            existingEpisodes.map((e) => e.trackId.toString())
         );
 
-        const savedResults = await Promise.all([
-            // Save only new results
-            ...newResults.map(async (result) => {
-                // Determine the best viewUrl to use
+        // Only save new podcasts and episodes
+        const newPodcasts = podcasts.filter(
+            (result) => !existingPodcastIds.has(result.trackId!.toString())
+        );
+        const newEpisodes = episodes.filter(
+            (result) => !existingEpisodeIds.has(result.trackId!.toString())
+        );
+
+        // Save new podcasts
+        await Promise.all(
+            newPodcasts.map(async (result) => {
                 const viewUrl =
                     result.trackViewUrl ||
                     result.collectionViewUrl ||
                     result.artistViewUrl;
 
-                return await prisma.searchResult.create({
+                return await prisma.podcast.create({
                     data: {
                         trackId: BigInt(result.trackId!),
                         searchTerm,
-                        kind: result.kind,
+                        trackName: result.trackName,
+                        artistName: result.artistName,
+                        artworkUrl100: result.artworkUrl100,
+                        artworkUrl60: result.artworkUrl60,
+                        viewUrl: viewUrl
+                    }
+                });
+            })
+        );
+
+        // Save new episodes
+        await Promise.all(
+            newEpisodes.map(async (result) => {
+                const viewUrl =
+                    result.trackViewUrl ||
+                    result.collectionViewUrl ||
+                    result.artistViewUrl;
+
+                return await prisma.podcastEpisode.create({
+                    data: {
+                        trackId: BigInt(result.trackId!),
+                        searchTerm,
                         trackName: result.trackName,
                         artistName: result.artistName,
                         collectionName: result.collectionName,
                         artworkUrl100: result.artworkUrl100,
                         artworkUrl60: result.artworkUrl60,
                         viewUrl: viewUrl
-                    } as any
-                });
-            }),
-            // Get existing results to return them too
-            ...existingResults.map(async (existingResult) => {
-                return await prisma.searchResult.findUnique({
-                    where: {
-                        trackId: existingResult.trackId
                     }
                 });
             })
-        ]);
-
-        // Filter out any null results and sort by trackId for consistency
-        const allResults = savedResults
-            .filter((result) => result !== null)
-            .sort((a, b) => Number(a!.trackId) - Number(b!.trackId));
-
-        // Convert BigInt to string for JSON serialization
-        const apiResponse = JSON.parse(
-            JSON.stringify(
-                {
-                    resultCount: data.resultCount,
-                    results: allResults,
-                    searchTerm,
-                    hasMore: data.results.length === limit && allResults.length > 0,
-                    newResultsCount: newResults.length,
-                    offset: offset,
-                    totalFetched: allResults.length
-                },
-                (key, value) => (typeof value === 'bigint' ? value.toString() : value)
-            )
         );
 
-        return NextResponse.json(apiResponse);
+        return NextResponse.json({
+            message: 'Search completed and results saved',
+            newPodcastsCount: newPodcasts.length,
+            newEpisodesCount: newEpisodes.length,
+            totalNewResults: newPodcasts.length + newEpisodes.length
+        });
     } catch (error) {
         console.error('Search API error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

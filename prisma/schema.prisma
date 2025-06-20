@@ -10,10 +10,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model SearchResult {
+model Podcast {
+  trackId       BigInt   @id
+  searchTerm    String
+  trackName     String?
+  artistName    String?
+  artworkUrl100 String?
+  artworkUrl60  String?
+  viewUrl       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relationship to episodes
+  episodes PodcastEpisode[]
+
+  @@map("podcasts")
+}
+
+model PodcastEpisode {
   trackId        BigInt   @id
   searchTerm     String
-  kind           String?
   trackName      String?
   artistName     String?
   collectionName String?
@@ -23,5 +39,9 @@ model SearchResult {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  @@map("search_results")
+  // Foreign key to podcast
+  podcastId BigInt?
+  podcast   Podcast? @relation(fields: [podcastId], references: [trackId])
+
+  @@map("podcast_episodes")
 }

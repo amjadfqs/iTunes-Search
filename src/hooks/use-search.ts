@@ -54,10 +54,8 @@ const fetchSearch = async (
     searchTerm: string,
     offset: number = 0
 ): Promise<SearchResponse> => {
-    // First trigger the search API to fetch and save new data
-    const searchResponse = await fetch(
-        `/api/search?q=${encodeURIComponent(searchTerm)}&offset=${offset}&limit=20`
-    );
+    // First trigger the search API to fetch and save new data (no pagination)
+    const searchResponse = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`);
 
     if (!searchResponse.ok) {
         throw new Error('Failed to search');
@@ -66,7 +64,7 @@ const fetchSearch = async (
     // Wait for the search to complete
     await searchResponse.json();
 
-    // Then fetch results from our database
+    // Then fetch results from our database with pagination
     const resultsResponse = await fetch(
         `/api/results?q=${encodeURIComponent(searchTerm)}&offset=${offset}&limit=20`
     );
@@ -83,18 +81,17 @@ export const useSearch = (searchTerm: string) => {
         queryKey: ['search', searchTerm],
         queryFn: ({ pageParam = 0 }) => fetchSearch(searchTerm, pageParam),
         getNextPageParam: (lastPage, allPages) => {
-            // Check if there are more results to fetch
+            // Check if there are more results to fetch from database
             if (lastPage.pagination?.hasMore) {
                 return lastPage.pagination.offset + lastPage.pagination.limit;
             }
-            // If no more DB results, but we haven't searched iTunes enough times, continue searching
-            if (allPages.length < 5) {
-                return allPages.length * 20;
-            }
+            // No more pagination needed since search API fetches all results at once
             return undefined;
         },
         enabled: !!searchTerm && searchTerm.length > 0,
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        staleTime: 1 * 60 * 1000, // Reduced to 1 minute
+        gcTime: 5 * 60 * 1000, // 5 minutes garbage collection
+        refetchOnWindowFocus: false,
         initialPageParam: 0
     });
 };
