@@ -57,7 +57,7 @@ export const EpisodeSection = ({ episodes }: EpisodeSectionProps) => {
 
     const formatDuration = (duration: string) => {
         const durationMs = parseInt(duration);
-        if (isNaN(durationMs) || durationMs === 0) return 'Unknown';
+        if (isNaN(durationMs) || durationMs === 0) return 'غير معروف';
 
         const minutes = Math.floor(durationMs / 60000);
         const seconds = Math.floor((durationMs % 60000) / 1000);
@@ -67,13 +67,13 @@ export const EpisodeSection = ({ episodes }: EpisodeSectionProps) => {
     const formatReleaseDate = (published: string) => {
         try {
             const date = new Date(published);
-            return date.toLocaleDateString('en-US', {
+            return date.toLocaleDateString('ar-SA', {
                 year: 'numeric',
                 month: 'short',
                 day: 'numeric'
             });
         } catch {
-            return 'Unknown';
+            return 'غير معروف';
         }
     };
 
@@ -83,7 +83,7 @@ export const EpisodeSection = ({ episodes }: EpisodeSectionProps) => {
         <div className='space-y-4'>
             {/* Header with view toggle */}
             <div className='flex items-center justify-between'>
-                <h3 className='text-lg font-semibold'>Episodes ({episodes.length})</h3>
+                <h3 className='text-lg font-semibold'>الحلقات ({episodes.length})</h3>
                 <Button
                     variant='ghost'
                     size='sm'
@@ -114,7 +114,7 @@ export const EpisodeSection = ({ episodes }: EpisodeSectionProps) => {
                                     ) : (
                                         <div className='flex h-full w-full items-center justify-center bg-gray-200'>
                                             <span className='text-xs text-gray-400'>
-                                                No Image
+                                                لا توجد صورة
                                             </span>
                                         </div>
                                     )}
@@ -195,7 +195,7 @@ export const EpisodeSection = ({ episodes }: EpisodeSectionProps) => {
                                         ) : (
                                             <div className='flex h-full w-full items-center justify-center bg-gray-200'>
                                                 <span className='text-xs text-gray-400'>
-                                                    No Image
+                                                    لا توجد صورة
                                                 </span>
                                             </div>
                                         )}

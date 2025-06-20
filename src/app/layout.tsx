@@ -10,9 +10,9 @@ import { Providers } from '@/lib/providers';
 import { Toaster } from '@/registry/new-york-v4/ui/sonner';
 import '@/styles/components.css';
 
-const geistSans = localFont({
-    src: './fonts/GeistVF.woff',
-    variable: '--font-geist-sans',
+const elMessiri = localFont({
+    src: './fonts/ElMessiri.ttf',
+    variable: '--font-el-messiri',
     weight: '100 900'
 });
 const geistMono = localFont({
@@ -22,15 +22,15 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-    title: 'iTunes Search App',
-    description: 'Search for music, movies, apps, and more from the iTunes Store'
+    title: 'تطبيق البحث في آيتيونز',
+    description: 'ابحث عن البودكاست وحلقات البودكاست من متجر آيتيونز'
 };
 
 const Layout = ({ children }: Readonly<{ children: ReactNode }>) => {
     return (
-        <html suppressHydrationWarning lang='en'>
+        <html suppressHydrationWarning lang='ar' dir='rtl'>
             <body
-                className={`${geistSans.variable} ${geistMono.variable} bg-background text-foreground overscroll-none antialiased`}>
+                className={`${elMessiri.variable} ${geistMono.variable} bg-background text-foreground overscroll-none antialiased`}>
                 <ThemeProvider attribute='class'>
                     <Providers>
                         {children}

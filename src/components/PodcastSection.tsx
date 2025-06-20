@@ -46,7 +46,7 @@ export const PodcastSection = ({ podcasts }: PodcastSectionProps) => {
         <div className='space-y-4'>
             {/* Header with view toggle */}
             <div className='flex items-center justify-between'>
-                <h3 className='text-lg font-semibold'>Podcasts ({podcasts.length})</h3>
+                <h3 className='text-lg font-semibold'>البودكاست ({podcasts.length})</h3>
                 <Button
                     variant='ghost'
                     size='sm'
@@ -78,7 +78,7 @@ export const PodcastSection = ({ podcasts }: PodcastSectionProps) => {
                                 ) : (
                                     <div className='flex h-full w-full items-center justify-center bg-gray-200'>
                                         <span className='text-sm text-gray-400'>
-                                            No Image
+                                            لا توجد صورة
                                         </span>
                                     </div>
                                 )}
@@ -134,7 +134,7 @@ export const PodcastSection = ({ podcasts }: PodcastSectionProps) => {
                                     ) : (
                                         <div className='flex h-full w-full items-center justify-center bg-gray-200'>
                                             <span className='text-sm text-gray-400'>
-                                                No Image
+                                                لا توجد صورة
                                             </span>
                                         </div>
                                     )}

@@ -102,7 +102,7 @@ const Page = () => {
                             <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
                             <Input
                                 type='text'
-                                placeholder='Search for songs, artists, albums... (Press / to focus)'
+                                placeholder='ابحث عن الأغاني والفنانين والألبومات... (اضغط / للتركيز)'
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className='pr-10 pl-10'
@@ -134,10 +134,10 @@ const Page = () => {
                         <Card className='border-destructive'>
                             <CardContent className='pt-6'>
                                 <p className='text-destructive'>
-                                    Error:{' '}
+                                    خطأ:{' '}
                                     {error instanceof Error
                                         ? error.message
-                                        : 'Something went wrong'}
+                                        : 'حدث خطأ ما'}
                                 </p>
                             </CardContent>
                         </Card>
@@ -146,7 +146,7 @@ const Page = () => {
                     {isLoading && (
                         <div className='py-8 text-center'>
                             <Loader2 className='mx-auto mb-4 h-8 w-8 animate-spin' />
-                            <p className='text-muted-foreground'>Searching iTunes...</p>
+                            <p className='text-muted-foreground'>البحث في آيتيونز...</p>
                         </div>
                     )}
 
@@ -169,12 +169,12 @@ const Page = () => {
                                         {isFetchingNextPage ? (
                                             <>
                                                 <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                                                Loading more...
+                                                تحميل المزيد...
                                             </>
                                         ) : (
                                             <>
                                                 <Search className='mr-2 h-4 w-4' />
-                                                Load More Results
+                                                تحميل نتائج أكثر
                                             </>
                                         )}
                                     </Button>
@@ -185,7 +185,7 @@ const Page = () => {
                             {!hasNextPage && totalResults > 0 && (
                                 <div className='pt-6 text-center'>
                                     <p className='text-muted-foreground text-sm'>
-                                        End of results ({totalResults} items loaded)
+                                        نهاية النتائج ({totalResults} عنصر محمل)
                                     </p>
                                 </div>
                             )}
@@ -197,10 +197,10 @@ const Page = () => {
                             <CardContent className='pt-6 text-center'>
                                 <Music className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
                                 <p className='text-muted-foreground'>
-                                    No podcasts or episodes found
+                                    لم يتم العثور على بودكاست أو حلقات
                                 </p>
                                 <p className='text-muted-foreground mt-2 text-sm'>
-                                    Try a different search term
+                                    جرب مصطلح بحث مختلف
                                 </p>
                             </CardContent>
                         </Card>
