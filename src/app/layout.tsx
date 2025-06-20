@@ -8,6 +8,7 @@ import { ThemeProvider } from 'next-themes';
 import '@/app/globals.css';
 import { Providers } from '@/lib/providers';
 import { Toaster } from '@/registry/new-york-v4/ui/sonner';
+import '@/styles/components.css';
 
 const geistSans = localFont({
     src: './fonts/GeistVF.woff',

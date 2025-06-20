@@ -1,31 +1,24 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
+import { EpisodeSection } from '@/components/EpisodeSection';
+import { PodcastSection } from '@/components/PodcastSection';
 import { useSearch } from '@/hooks/use-search';
 import { Badge } from '@/registry/new-york-v4/ui/badge';
 import { Button } from '@/registry/new-york-v4/ui/button';
 import { Card, CardContent } from '@/registry/new-york-v4/ui/card';
 import { Input } from '@/registry/new-york-v4/ui/input';
 
-import {
-    ChevronLeft,
-    ChevronRight,
-    ExternalLink,
-    Loader2,
-    Music,
-    Search
-} from 'lucide-react';
+import { Loader2, Music, Search } from 'lucide-react';
 
 const Page = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const activeSearch = searchParams.get('q') || '';
     const [searchTerm, setSearchTerm] = useState(activeSearch);
-    const [showScrollIndicators, setShowScrollIndicators] = useState(false);
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
         useSearch(activeSearch);
@@ -98,34 +91,6 @@ const Page = () => {
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-    // Check if podcasts scroll container needs indicators
-    useEffect(() => {
-        const checkScrollNeeded = () => {
-            if (scrollContainerRef.current) {
-                const { scrollWidth, clientWidth } = scrollContainerRef.current;
-                setShowScrollIndicators(scrollWidth > clientWidth);
-            }
-        };
-
-        checkScrollNeeded();
-        window.addEventListener('resize', checkScrollNeeded);
-        return () => window.removeEventListener('resize', checkScrollNeeded);
-    }, [allPodcasts]);
-
-    const scrollPodcasts = (direction: 'left' | 'right') => {
-        if (scrollContainerRef.current) {
-            const scrollAmount = 240; // Width of one card plus gap
-            const newScrollLeft =
-                scrollContainerRef.current.scrollLeft +
-                (direction === 'right' ? scrollAmount : -scrollAmount);
-
-            scrollContainerRef.current.scrollTo({
-                left: newScrollLeft,
-                behavior: 'smooth'
-            });
-        }
-    };
 
     return (
         <div className='bg-background min-h-screen'>
@@ -200,193 +165,11 @@ const Page = () => {
 
                     {data && totalResults > 0 && (
                         <div className='space-y-8'>
-                            <div className='flex items-center justify-between'>
-                                <h2 className='text-xl font-semibold'>Search Results</h2>
-                                <Badge variant='secondary'>
-                                    {totalResults} result{totalResults !== 1 ? 's' : ''}{' '}
-                                    found
-                                </Badge>
-                            </div>
+                            {/* Podcasts Section */}
+                            <PodcastSection podcasts={allPodcasts} />
 
-                            {/* Podcasts Section - Horizontal Scroll */}
-                            {allPodcasts.length > 0 && (
-                                <div className='space-y-4'>
-                                    <h3 className='flex items-center gap-2 text-lg font-semibold'>
-                                        <Music className='h-5 w-5' />
-                                        Podcasts ({allPodcasts.length})
-                                    </h3>
-                                    <div className='relative'>
-                                        {/* Scroll Indicators */}
-                                        {showScrollIndicators && (
-                                            <>
-                                                <Button
-                                                    variant='outline'
-                                                    size='sm'
-                                                    className='absolute top-1/2 left-0 z-10 h-8 w-8 -translate-y-1/2 rounded-full p-0 shadow-md'
-                                                    onClick={() =>
-                                                        scrollPodcasts('left')
-                                                    }>
-                                                    <ChevronLeft className='h-4 w-4' />
-                                                </Button>
-                                                <Button
-                                                    variant='outline'
-                                                    size='sm'
-                                                    className='absolute top-1/2 right-4 z-10 h-8 w-8 -translate-y-1/2 rounded-full p-0 shadow-md'
-                                                    onClick={() =>
-                                                        scrollPodcasts('right')
-                                                    }>
-                                                    <ChevronRight className='h-4 w-4' />
-                                                </Button>
-                                            </>
-                                        )}
-                                        <div
-                                            ref={scrollContainerRef}
-                                            className='scrollbar-hide flex gap-3 overflow-x-auto scroll-smooth pr-4 pb-4 md:gap-4'>
-                                            {allPodcasts.map((podcast) => (
-                                                <Card
-                                                    key={podcast._id}
-                                                    className='w-48 flex-shrink-0 transition-shadow hover:shadow-md sm:w-56 md:w-64'>
-                                                    <CardContent className='p-3 md:p-4'>
-                                                        <div className='space-y-2 md:space-y-3'>
-                                                            {/* Artwork */}
-                                                            {podcast.image && (
-                                                                <div className='relative'>
-                                                                    <img
-                                                                        src={
-                                                                            podcast.image
-                                                                        }
-                                                                        alt={
-                                                                            podcast.title
-                                                                        }
-                                                                        className='aspect-square w-full rounded-lg object-cover'
-                                                                    />
-                                                                    <Badge
-                                                                        variant='secondary'
-                                                                        className='absolute top-2 right-2 text-xs'>
-                                                                        Podcast
-                                                                    </Badge>
-                                                                </div>
-                                                            )}
-
-                                                            {/* Content */}
-                                                            <div className='space-y-1 md:space-y-2'>
-                                                                <h4 className='line-clamp-2 text-xs leading-tight font-semibold md:text-sm'>
-                                                                    {podcast.title}
-                                                                </h4>
-                                                                <p className='text-muted-foreground line-clamp-1 text-xs'>
-                                                                    by {podcast.author}
-                                                                </p>
-
-                                                                {/* Link */}
-                                                                {podcast.feed_url && (
-                                                                    <Button
-                                                                        size='sm'
-                                                                        variant='outline'
-                                                                        asChild
-                                                                        className='w-full text-xs'>
-                                                                        <a
-                                                                            href={
-                                                                                podcast.feed_url
-                                                                            }
-                                                                            target='_blank'
-                                                                            rel='noopener noreferrer'
-                                                                            className='flex items-center gap-1'>
-                                                                            <ExternalLink className='h-3 w-3' />
-                                                                            View Podcast
-                                                                        </a>
-                                                                    </Button>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </CardContent>
-                                                </Card>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Episodes Section - Compact List */}
-                            {allEpisodes.length > 0 && (
-                                <div className='space-y-4'>
-                                    <h3 className='flex items-center gap-2 text-lg font-semibold'>
-                                        <Music className='h-5 w-5' />
-                                        Podcast Episodes ({allEpisodes.length})
-                                    </h3>
-                                    <div className='space-y-2 md:space-y-3'>
-                                        {allEpisodes.map((episode) => (
-                                            <Card
-                                                key={episode._id}
-                                                className='transition-shadow hover:shadow-sm'>
-                                                <CardContent className='p-3 md:p-4'>
-                                                    <div className='flex gap-2 md:gap-3'>
-                                                        {/* Artwork */}
-                                                        {episode.image && (
-                                                            <div className='flex-shrink-0'>
-                                                                <img
-                                                                    src={episode.image}
-                                                                    alt={episode.title}
-                                                                    className='h-12 w-12 rounded-md object-cover md:h-16 md:w-16'
-                                                                />
-                                                            </div>
-                                                        )}
-
-                                                        {/* Content */}
-                                                        <div className='min-w-0 flex-1'>
-                                                            <div className='flex items-start justify-between gap-2 md:gap-3'>
-                                                                <div className='min-w-0 flex-1'>
-                                                                    <h4 className='mb-1 line-clamp-2 text-xs leading-tight font-semibold md:text-sm'>
-                                                                        {episode.title}
-                                                                    </h4>
-                                                                    <p className='text-muted-foreground mb-1 line-clamp-1 text-xs'>
-                                                                        {
-                                                                            episode
-                                                                                .podcast
-                                                                                .title
-                                                                        }
-                                                                    </p>
-                                                                    <div className='flex items-center gap-2'>
-                                                                        <Badge
-                                                                            variant='outline'
-                                                                            className='px-2 py-0 text-xs'>
-                                                                            Podcast
-                                                                            Episode
-                                                                        </Badge>
-                                                                        <span className='text-muted-foreground text-xs'>
-                                                                            {new Date(
-                                                                                episode.published
-                                                                            ).toLocaleDateString()}
-                                                                        </span>
-                                                                    </div>
-                                                                </div>
-
-                                                                {/* Action Button */}
-                                                                {episode.mediaURL && (
-                                                                    <Button
-                                                                        size='sm'
-                                                                        variant='outline'
-                                                                        asChild>
-                                                                        <a
-                                                                            href={
-                                                                                episode.mediaURL
-                                                                            }
-                                                                            target='_blank'
-                                                                            rel='noopener noreferrer'
-                                                                            className='flex items-center gap-1 px-2 text-xs'>
-                                                                            <ExternalLink className='h-3 w-3' />
-                                                                            Listen
-                                                                        </a>
-                                                                    </Button>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
+                            {/* Episodes Section */}
+                            <EpisodeSection episodes={allEpisodes} />
 
                             {/* Load More Button */}
                             {hasNextPage && (
